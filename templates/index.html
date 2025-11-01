@@ -1,0 +1,859 @@
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обмен смен</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 14px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .tab-btn.active {
+            color: #0088cc;
+            border-bottom-color: #0088cc;
+        }
+
+        .tab-btn:hover {
+            color: #888;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #262626;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #0088cc;
+            margin-bottom: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .shift-card {
+            background: #262626;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            opacity: 1;
+            transition: all 0.3s;
+        }
+
+        .shift-card:hover {
+            background: #2d2d2d;
+            border-color: #404040;
+        }
+
+        .shift-card.taken {
+            opacity: 0.5;
+            background: #1a1a1a;
+        }
+
+        .shift-card.taken:hover {
+            background: #1a1a1a;
+        }
+
+        .shift-info {
+            flex: 1;
+        }
+
+        .shift-person {
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .shift-details {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 2px;
+        }
+
+        .shift-status {
+            font-size: 11px;
+            color: #666;
+            background: #1a1a1a;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 6px;
+            display: inline-block;
+        }
+
+        .shift-status.taken {
+            color: #0088cc;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: #0088cc;
+            color: #ffffff;
+        }
+
+        .btn-primary:active {
+            opacity: 0.8;
+            transform: scale(0.98);
+        }
+
+        .btn-primary:hover {
+            background: #0077b5;
+        }
+
+        .btn-secondary {
+            background: #262626;
+            color: #0088cc;
+            border: 1px solid #0088cc;
+        }
+
+        .btn-secondary:hover {
+            background: #333;
+        }
+
+        .btn-danger {
+            background: #d32f2f;
+            color: #ffffff;
+        }
+
+        .btn-danger:hover {
+            background: #b71c1c;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            font-size: 14px;
+            background: #262626;
+            color: #ffffff;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .form-input::placeholder, .form-select::placeholder {
+            color: #666;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #0088cc;
+            background: #2d2d2d;
+        }
+
+        .time-inputs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .time-inputs input {
+            flex: 1;
+        }
+
+        .auth-screen {
+            padding: 30px 0;
+        }
+
+        .auth-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #ffffff;
+        }
+
+        .auth-subtitle {
+            font-size: 13px;
+            text-align: center;
+            color: #999;
+            margin-bottom: 30px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 56px;
+            margin-bottom: 12px;
+        }
+
+        .empty-text {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .request-item {
+            background: #262626;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .request-item:hover {
+            border-color: #404040;
+            background: #2d2d2d;
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .request-person {
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .request-info {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .request-status {
+            font-size: 11px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .request-status.pending {
+            background: #4a3f1a;
+            color: #ffd700;
+        }
+
+        .request-status.approved {
+            background: #1a3a2a;
+            color: #4caf50;
+        }
+
+        .request-status.rejected {
+            background: #3a1a1a;
+            color: #d32f2f;
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .request-actions .btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #0088cc;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .history-item {
+            background: #262626;
+            border-left: 3px solid #0088cc;
+            border-radius: 6px;
+            padding: 14px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .history-item:hover {
+            background: #2d2d2d;
+            border-left-color: #00a8ff;
+        }
+
+        .history-action {
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 6px;
+        }
+
+        .history-details {
+            color: #999;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .divider {
+            height: 1px;
+            background: #1a1a1a;
+            margin: 16px 0;
+        }
+
+        /* Скролл стилизация */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Auth Screen -->
+        <div id="authScreen" class="auth-screen" style="display: none;">
+            <div class="auth-title">🔄 Обмен смен</div>
+            <div class="auth-subtitle">Управление сменами в команде</div>
+            
+            <div class="section">
+                <form id="authForm">
+                    <div class="form-group">
+                        <label class="form-label">LDAP ник *</label>
+                        <input type="text" id="ldapInput" class="form-input" placeholder="example.user" required autofocus>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 14px;">
+                        ✓ Войти
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main App -->
+        <div id="mainApp" style="display: none;">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('shifts')">📋 Смены</button>
+                <button class="tab-btn" onclick="switchTab('requests')">🔔 Запросы</button>
+                <button class="tab-btn" onclick="switchTab('history')">📊 История</button>
+            </div>
+
+            <!-- Shifts Tab -->
+            <div id="shiftsTab" class="tab-content active">
+                <!-- Available Shifts -->
+                <div class="section">
+                    <div class="section-title">Доступные смены</div>
+                    <div id="availableShiftsList"></div>
+                </div>
+
+                <!-- Create Shift -->
+                <div class="section">
+                    <div class="section-title">Отправить смену</div>
+                    <form id="createShiftForm">
+                        <div class="form-group">
+                            <label class="form-label">Дата *</label>
+                            <input type="date" id="shiftDate" class="form-input" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Тип смены *</label>
+                            <select id="shiftType" class="form-select" required onchange="updateShiftTypeUI()">
+                                <option value="">Выберите тип смены...</option>
+                                <option value="день">🌅 День (06:00-18:00)</option>
+                                <option value="ночь">🌙 Ночь (18:00-06:00)</option>
+                                <option value="часы">⏰ Часы (произвольно)</option>
+                            </select>
+                        </div>
+
+                        <div id="timeInputs" style="display: none;">
+                            <div class="form-group">
+                                <label class="form-label">Время начала и конца *</label>
+                                <div class="time-inputs">
+                                    <input type="time" id="startTime" class="form-input" placeholder="Начало">
+                                    <input type="time" id="endTime" class="form-input" placeholder="Конец">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 14px;">
+                            ✎ Отправить смену
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Requests Tab -->
+            <div id="requestsTab" class="tab-content">
+                <div class="section">
+                    <div class="section-title">Запросы на ваши смены</div>
+                    <div id="requestsList"></div>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="historyTab" class="tab-content">
+                <div class="section">
+                    <div class="section-title">История операций</div>
+                    <div id="historyList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        let user = null;
+        let currentUser = null;
+
+        // Initialize
+        tg.ready();
+        tg.expand();
+
+        if (tg.initData) {
+            const initData = new URLSearchParams(tg.initData);
+            const userData = JSON.parse(initData.get('user'));
+            currentUser = userData;
+            checkAuth();
+        } else {
+            // Development mode
+            showAuthScreen();
+        }
+
+        function checkAuth() {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                user = JSON.parse(savedUser);
+                showMainApp();
+                loadShifts();
+                loadRequests();
+                loadHistory();
+            } else {
+                showAuthScreen();
+            }
+        }
+
+        function showAuthScreen() {
+            document.getElementById('authScreen').style.display = 'block';
+            document.getElementById('mainApp').style.display = 'none';
+        }
+
+        function showMainApp() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+        }
+
+        // Auth
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const ldap = document.getElementById('ldapInput').value.trim();
+            
+            if (!ldap) {
+                alert('Пожалуйста, введите LDAP ник');
+                return;
+            }
+
+            try {
+                const userData = {
+                    telegram_id: currentUser?.id || Math.random(),
+                    ldap: ldap,
+                    first_name: currentUser?.first_name || 'User',
+                    username: currentUser?.username || ''
+                };
+
+                const response = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(userData)
+                });
+
+                if (response.ok) {
+                    user = userData;
+                    localStorage.setItem('user', JSON.stringify(userData));
+                    showMainApp();
+                    loadShifts();
+                    loadRequests();
+                    loadHistory();
+                    showNotification('✓ Успешно вошли!');
+                }
+            } catch (error) {
+                console.error('Auth error:', error);
+                alert('Ошибка авторизации');
+            }
+        });
+
+        // Shift Type UI
+        function updateShiftTypeUI() {
+            const type = document.getElementById('shiftType').value;
+            document.getElementById('timeInputs').style.display = 
+                type === 'часы' ? 'block' : 'none';
+        }
+
+        // Create Shift
+        document.getElementById('createShiftForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const shiftDate = document.getElementById('shiftDate').value;
+            const shiftType = document.getElementById('shiftType').value;
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+
+            if (shiftType === 'часы' && (!startTime || !endTime)) {
+                alert('Пожалуйста, укажите время начала и конца');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/shift/create', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        telegram_id: user.telegram_id,
+                        shift_date: shiftDate,
+                        shift_type: shiftType,
+                        start_time: startTime || null,
+                        end_time: endTime || null
+                    })
+                });
+
+                if (response.ok) {
+                    showNotification('✓ Смена отправлена!');
+                    document.getElementById('createShiftForm').reset();
+                    updateShiftTypeUI();
+                    loadShifts();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Ошибка при отправке смены');
+            }
+        });
+
+        // Load Available Shifts
+        async function loadShifts() {
+            try {
+                const response = await fetch('/api/available-shifts');
+                const shifts = await response.json();
+
+                const list = document.getElementById('availableShiftsList');
+                list.innerHTML = '';
+
+                if (shifts.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">Нет доступных смен</div></div>';
+                    return;
+                }
+
+                shifts.forEach(shift => {
+                    const isTaken = shift.is_taken;
+                    const isMyShift = shift.creator_ldap === user.ldap;
+                    const timeStr = shift.shift_type === 'часы' 
+                        ? `${shift.start_time}-${shift.end_time}`
+                        : (shift.shift_type === 'день' ? '06:00-18:00' : '18:00-06:00');
+
+                    let html = `
+                        <div class="shift-card ${isTaken ? 'taken' : ''}">
+                            <div class="shift-info">
+                                <div class="shift-person">${shift.creator_ldap}</div>
+                                <div class="shift-details">${shift.shift_date}</div>
+                                <div class="shift-details">${shift.shift_type} • ${timeStr}</div>
+                    `;
+
+                    if (isTaken) {
+                        html += `<div class="shift-status taken">✓ Взята ${shift.requester_ldap}</div>`;
+                    }
+
+                    html += `</div>`;
+
+                    if (!isMyShift && !isTaken) {
+                        html += `
+                            <button class="btn btn-primary" onclick="requestShift(${shift.id})" style="margin-left: 10px;">
+                                Взять
+                            </button>
+                        `;
+                    }
+
+                    html += `</div>`;
+                    list.innerHTML += html;
+                });
+            } catch (error) {
+                console.error('Error loading shifts:', error);
+            }
+        }
+
+        // Request Shift
+        async function requestShift(shiftId) {
+            try {
+                const response = await fetch('/api/shift/request', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        shift_id: shiftId,
+                        telegram_id: user.telegram_id
+                    })
+                });
+
+                if (response.ok) {
+                    showNotification('✓ Запрос отправлен!');
+                    loadShifts();
+                } else {
+                    const error = await response.json();
+                    alert(error.error || 'Ошибка');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Ошибка при отправке запроса');
+            }
+        }
+
+        // Load Requests
+        async function loadRequests() {
+            try {
+                const response = await fetch(`/api/shift/requests?telegram_id=${user.telegram_id}`);
+                const requests = await response.json();
+
+                const list = document.getElementById('requestsList');
+                list.innerHTML = '';
+
+                if (requests.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">Нет запросов</div></div>';
+                    return;
+                }
+
+                requests.forEach(req => {
+                    const statusMap = {
+                        'pending': 'На рассмотрении',
+                        'approved': 'Подтверждено',
+                        'rejected': 'Отклонено'
+                    };
+
+                    let html = `
+                        <div class="request-item">
+                            <div class="request-header">
+                                <div>
+                                    <div class="request-person">${req.requester_ldap}</div>
+                                    <div class="request-info">${req.shift_date} • ${req.shift_type}</div>
+                                </div>
+                                <span class="request-status ${req.status}">${statusMap[req.status]}</span>
+                            </div>
+                    `;
+
+                    if (req.status === 'pending') {
+                        html += `
+                            <div class="request-actions">
+                                <button class="btn btn-primary" onclick="approveRequest(${req.id})">✓ Согласиться</button>
+                                <button class="btn btn-danger" onclick="rejectRequest(${req.id})">✗ Отклонить</button>
+                            </div>
+                        `;
+                    }
+
+                    html += `</div>`;
+                    list.innerHTML += html;
+                });
+            } catch (error) {
+                console.error('Error loading requests:', error);
+            }
+        }
+
+        // Approve Request
+        async function approveRequest(requestId) {
+            try {
+                const response = await fetch('/api/shift/approve', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({request_id: requestId})
+                });
+
+                if (response.ok) {
+                    showNotification('✓ Смена подтверждена!');
+                    loadRequests();
+                    loadShifts();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Reject Request
+        async function rejectRequest(requestId) {
+            try {
+                const response = await fetch('/api/shift/reject', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({request_id: requestId})
+                });
+
+                if (response.ok) {
+                    showNotification('✓ Запрос отклонен');
+                    loadRequests();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Load History
+        async function loadHistory() {
+            try {
+                const response = await fetch(`/api/shift/history?telegram_id=${user.telegram_id}`);
+                const history = await response.json();
+
+                const list = document.getElementById('historyList');
+                list.innerHTML = '';
+
+                if (history.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">История пуста</div></div>';
+                    return;
+                }
+
+                history.forEach(h => {
+                    const actionMap = {
+                        'created': '📤 Отправлена',
+                        'approved': '✅ Подтверждена',
+                        'rejected': '❌ Отклонена',
+                        'cancelled': '🚫 Отменена'
+                    };
+
+                    const html = `
+                        <div class="history-item">
+                            <div class="history-action">${actionMap[h.action]} ${h.shift_date}</div>
+                            <div class="history-details">
+                                <strong>${h.shift_type}</strong> • От: ${h.creator_ldap}${h.requester_ldap ? ` → ${h.requester_ldap}` : ''}
+                            </div>
+                        </div>
+                    `;
+                    list.innerHTML += html;
+                });
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
+
+            if (tab === 'requests') loadRequests();
+            if (tab === 'history') loadHistory();
+        }
+
+        // Notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Set min date to today
+        const today = new Date().toISOString().split('T')[0];
+        const maxDate = new Date();
+        maxDate.setDate(maxDate.getDate() + 30);
+        const maxDateStr = maxDate.toISOString().split('T')[0];
+        
+        document.getElementById('shiftDate').min = today;
+        document.getElementById('shiftDate').max = maxDateStr;
+    </script>
+</body>
+</html>
