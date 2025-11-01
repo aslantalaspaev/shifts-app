@@ -3,6 +3,8 @@ from flask_cors import CORS
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from database import SessionLocal, User, Shift, ShiftRequest, ShiftHistory
+from config import MINI_APP_URL
+import os
 import json
 
 app = Flask(__name__)
